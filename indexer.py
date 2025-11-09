@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import re
 from nltk.stem import PorterStemmer
 from posting import Posting
+import os
 
 
 """
@@ -69,10 +70,33 @@ def indexer(corpus):
             except json.decoder.JSONDecodeError as e:
                 print(e)
                 print("error:", file)
-                
-    print(index)
     return index
+
+def generate_report(index, report_file="report.txt"):
+    # Num of unique documents
+    doc_set = set()
+    for postings in index.values():
+        for p in postings:
+            doc_set.add(p.url)
+    num_docs = len(doc_set)
+
+    # Num of unique tokens
+    num_tokens = len(index)
+
+    # Save index to disk to measure size
+    with open("index.json", "w") as f:
+        json.dump({k:[p.__dict__ for p in v] for k,v in index.items()}, f)
+    index_size_kb = os.path.getsize("index.json") / 1024
+
+    # Write to report.txt
+    with open(report_file, "w") as f:
+        f.write(f"Documents indexed: {num_docs}\n")
+        f.write(f"Unique tokens: {num_tokens}\n")
+        f.write(f"Index size (KB): {index_size_kb:.2f}\n")
+
+    print(f"Report saved to {report_file}")
 
 
 if __name__ == "__main__":
     index = indexer("developer.zip")
+    generate_report(index)
