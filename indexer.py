@@ -13,9 +13,15 @@ Add functions here to 1) strip html tags to get raw text and 2) extract the text
 important tags like h2, strong tags.
 """
 
+EXTRACT_PATH = "developer"
+
 def extract_text(html):
-    soup = BeautifulSoup(html, "lxml")
-    return soup.get_text(separator=" ", strip=True)
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+        return soup.get_text(separator=" ", strip=True)
+    except Exception:
+        return ""
+
 
 def indexer(corpus):
     """
@@ -32,44 +38,46 @@ def indexer(corpus):
         concurrently, while going through the html file, regex <h{n}>
 
     """
-    with zipfile.ZipFile(corpus, "r") as zip_ref:
-        for file in zip_ref.namelist():
-            try:
-                # 1) load json
-                with zip_ref.open(file) as f:
-                    data = json.load(f)
-                print("success: ", file)
-                html = data["content"]
-                encoding = data["encoding"]
-                url = data["url"].split("#")[0]
+    if not os.path.isdir(EXTRACT_PATH):
+        with zipfile.ZipFile(corpus, "r") as zip_ref:
+            zip_ref.extractall(EXTRACT_PATH)
 
-                # 2) text extraction + stemming
-                plain = extract_text(html)
-                tokens = tokenizer.tokenize(plain)
-                stemmed_tokens = [stemmer.stem(token) for token in tokens]
+    count = 1
+    for root, _, files in os.walk(EXTRACT_PATH):
+        for file in files:
+            # 1) open the file
+            file_path = os.path.join(root, file)
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            html = data["content"]
+            url = data["url"].split("#")[0]
 
-                # 3) important words
-                important_tokens = []
-                # implement imp words logic here
-                important_stemmed = [stemmer.stem(token) for token in important_tokens]
+            print("success: ", count, file)
 
-                # 4) build index
-                for i, word in enumerate(stemmed_tokens):
-                    if word not in index:
-                        posting = Posting(url, 1)
-                        index[word] = [posting]
-                    if url not in index[word]:
-                        posting = Posting(url, 1)
-                        index[word].append(posting)
-                    else: # url is already associated with the word, so increment the posting's frequency
-                        j = index[word].index(url)
-                        index[word][j].freq += 1
-                        # insert to index, could potentially include tuple with url weight for
-                        # when they are different importance levels
+            # 2) text extraction + stemming
+            plain = extract_text(html)
+            tokens = tokenizer.tokenize(plain)
+            stemmed_tokens = [stemmer.stem(token) for token in tokens]
 
-            except json.decoder.JSONDecodeError as e:
-                print(e)
-                print("error:", file)
+            # 3) important words
+            important_tokens = []
+            # implement imp words logic here
+            important_stemmed = [stemmer.stem(token) for token in important_tokens]
+
+            # 4) build index
+            for word in stemmed_tokens:
+                if word not in index:
+                    posting = Posting(doc_id=url, freq=1)
+                    index[word] = [posting]
+
+                posting = next((p for p in index[word] if p.doc_id == url), None) # search for a url in the list of postings for a word
+                if posting:
+                    posting.freq += 1
+                else:
+                    index[word].append(Posting(doc_id=url, freq=1))
+                     
+            count += 1
+
     return index
 
 def generate_report(index, report_file="report.txt"):
@@ -77,7 +85,7 @@ def generate_report(index, report_file="report.txt"):
     doc_set = set()
     for postings in index.values():
         for p in postings:
-            doc_set.add(p.url)
+            doc_set.add(p.doc_id)
     num_docs = len(doc_set)
 
     # Num of unique tokens
@@ -85,7 +93,7 @@ def generate_report(index, report_file="report.txt"):
 
     # Save index to disk to measure size
     with open("index.json", "w") as f:
-        json.dump({k:[p.__dict__ for p in v] for k,v in index.items()}, f)
+        json.dump({k:[p.__dict__ for p in v] for k,v in index.items()}, f, indent=2)
     index_size_kb = os.path.getsize("index.json") / 1024
 
     # Write to report.txt

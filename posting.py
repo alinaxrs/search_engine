@@ -1,3 +1,6 @@
-from collections import namedtuple
+from dataclasses import dataclass
 
-Posting = namedtuple("Posting", ["doc_id", "freq"]) # in M2, change freq to tf-idf score
+@dataclass
+class Posting:
+    doc_id: str
+    freq: int
