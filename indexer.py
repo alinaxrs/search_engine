@@ -14,6 +14,7 @@ important tags like h2, strong tags.
 """
 
 EXTRACT_PATH = "developer"
+BATCH_SIZE = 2000
 
 def extract_text(html):
     try:
@@ -75,12 +76,14 @@ def indexer(corpus):
                     posting.freq += 1
                 else:
                     index[word].append(Posting(doc_id=url, freq=1))
-                     
             count += 1
+            if count % BATCH_SIZE == 0:
+                generate_report(index, f"report_{count}.txt", f"index_{count}.json")
+                index = {}
 
     return index
 
-def generate_report(index, report_file="report.txt"):
+def generate_report(index, report_file="report.txt", index_file="index.json"):
     # Num of unique documents
     doc_set = set()
     for postings in index.values():
@@ -92,9 +95,9 @@ def generate_report(index, report_file="report.txt"):
     num_tokens = len(index)
 
     # Save index to disk to measure size
-    with open("index.json", "w") as f:
+    with open(index_file, "w") as f:
         json.dump({k:[p.__dict__ for p in v] for k,v in index.items()}, f, indent=2)
-    index_size_kb = os.path.getsize("index.json") / 1024
+    index_size_kb = os.path.getsize(index_file) / 1024
 
     # Write to report.txt
     with open(report_file, "w") as f:
