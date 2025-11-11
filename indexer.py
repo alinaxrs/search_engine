@@ -83,7 +83,7 @@ def indexer(corpus):
 
     return index
 
-def generate_report(index, report_file="report.txt", index_file="index.json"):
+def generate_report(index, report_file="report.txt", index_file="index_0000.json"):
     # Num of unique documents
     doc_set = set()
     for postings in index.values():
