@@ -42,6 +42,19 @@ def extract_important_words(soup):
 
     return " ".join(important)
 
+def add_to_index(tokens, index, url, f, unique_tokens):
+    for word in tokens:
+        if word not in index:
+            posting = Posting(doc_id=url, freq=f)
+            index[word] = [posting]
+            unique_tokens += 1
+
+        posting = next((p for p in index[word] if p.doc_id == url), None)
+        if posting:
+            posting.freq += f
+        else:
+            index[word].append(Posting(doc_id=url, freq=f))
+
 def indexer(corpus):
     index = {}
     stemmer = PorterStemmer()
@@ -77,18 +90,9 @@ def indexer(corpus):
             important_stemmed = [stemmer.stem(token) for token in important_tokens]
 
             # 4) build index
-            ####### TO DO: create helper function for tokens with importance + freq added
-            for word in stemmed_tokens:
-                if word not in index:
-                    posting = Posting(doc_id=url, freq=1)
-                    index[word] = [posting]
-                    unique_tokens += 1
+            add_to_index(stemmed_tokens, index, url, f=1, unique_tokens=unique_tokens)
+            add_to_index(important_stemmed, index, url, f=2, unique_tokens=unique_tokens)
 
-                posting = next((p for p in index[word] if p.doc_id == url), None)
-                if posting:
-                    posting.freq += 1
-                else:
-                    index[word].append(Posting(doc_id=url, freq=1))
             count += 1
             if count % BATCH_SIZE == 0:
                 generate_report(index, num_docs, unique_tokens, f"report_{count}.txt", f"index_{count}.json")
