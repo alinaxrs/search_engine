@@ -54,6 +54,8 @@ def add_to_index(tokens, index, url, f, unique_tokens):
             posting.freq += f
         else:
             index[word].append(Posting(doc_id=url, freq=f))
+    
+    return unique_tokens
 
 def indexer(corpus):
     index = {}
@@ -65,7 +67,7 @@ def indexer(corpus):
         with zipfile.ZipFile(corpus, "r") as zip_ref:
             zip_ref.extractall(EXTRACT_PATH)
 
-    count = 1
+    count = 0
     for root, _, files in os.walk(EXTRACT_PATH):
         for file in files:
             num_docs += 1
@@ -75,8 +77,6 @@ def indexer(corpus):
                 data = json.load(f)
             html = data["content"]
             url = data["url"].split("#")[0]
-
-            print("success: ", count, file)
 
             # text extraction + stemming
             soup = BeautifulSoup(html, "html.parser")
@@ -90,10 +90,12 @@ def indexer(corpus):
             important_stemmed = [stemmer.stem(token) for token in important_tokens]
 
             # 4) build index
-            add_to_index(stemmed_tokens, index, url, f=1, unique_tokens=unique_tokens)
-            add_to_index(important_stemmed, index, url, f=2, unique_tokens=unique_tokens)
+            unique_tokens = add_to_index(stemmed_tokens, index, url, f=1, unique_tokens=unique_tokens)
+            unique_tokens = add_to_index(important_stemmed, index, url, f=2, unique_tokens=unique_tokens)
 
             count += 1
+            if count % 500 == 0:
+                print(count)
             if count % BATCH_SIZE == 0:
                 generate_report(index, num_docs, unique_tokens, f"report_{count}.txt", f"index_{count}.json")
                 index = {}
