@@ -42,13 +42,17 @@ def k_way_merge_partials_to_terms(partial_files, terms_file):
                 continue
             obj = json.loads(line)
             heap.append((obj["term"], idx, obj["postings"]))
-
         heapq.heapify(heap)
+
+        term_index = {}
 
         with open(terms_file, "w", encoding="utf-8") as out:
             while heap:
                 term, idx, postings = heapq.heappop(heap)
                 merged_docs = defaultdict(int)
+
+                term_index[term] = out.tell()
+
                 # incorporate postings from the popped entry
                 for p in postings:
                     merged_docs[p["doc_id"]] += p["freq"]
@@ -71,7 +75,7 @@ def k_way_merge_partials_to_terms(partial_files, terms_file):
                     heapq.heappush(heap, (obj["term"], idx, obj["postings"]))
 
                 # write merged term
-                postings_list = [{"doc_id": d, "freq": f} for d, f in merged_docs.items()]
+                postings_list = sorted([{"doc_id": d, "freq": f} for d, f in merged_docs.items()], key=lambda x: x["doc_id"])
                 sf = sum(p["freq"] for p in postings_list)
                 out.write(json.dumps({"term": term, "sf": sf, "postings": postings_list}, ensure_ascii=False) + "\n")
 
@@ -81,12 +85,15 @@ def k_way_merge_partials_to_terms(partial_files, terms_file):
                 f.close()
             except Exception:
                 pass
+        
+        with open("term_index.json", "w") as out:
+            json.dump(term_index, out)
 
 
 def main():
     index_files = []
     starting = "0000"
-    for i in range(28):
+    for i in range(1):
         index_files.append(f"index_{starting}.json")
         starting = str(int(starting) + 2000)
 

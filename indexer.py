@@ -13,7 +13,7 @@ Add functions here to 1) strip html tags to get raw text and 2) extract the text
 important tags like h2, strong tags.
 """
 
-EXTRACT_PATH = "developer"
+EXTRACT_PATH = "analyst"
 BATCH_SIZE = 2000
 
 def extract_text(soup):
@@ -100,7 +100,7 @@ def indexer(corpus):
                 generate_report(index, num_docs, unique_tokens, f"report_{count}.txt", f"index_{count}.json")
                 index = {}
 
-    return index
+    return index, num_docs, unique_tokens
 
 def generate_report(index, num_docs, unique_tokens, report_file="report.txt", index_file="index_0000.json"):
     # Save index to disk to measure size
@@ -119,5 +119,5 @@ def generate_report(index, num_docs, unique_tokens, report_file="report.txt", in
 
 
 if __name__ == "__main__":
-    index = indexer("developer.zip")
-    generate_report(index)
+    index, num_docs, unique_tokens = indexer("developer.zip")
+    generate_report(index, num_docs, unique_tokens)

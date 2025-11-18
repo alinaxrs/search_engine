@@ -3,3 +3,7 @@ analyst.zip
 __pycache__/
 report.txt
 developer/
+analyst/
+partials/
+report*.txt
+*json
