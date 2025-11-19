@@ -1,10 +1,17 @@
 import json
+import heapq
 
 
 def merge_postings(postings):
-    return []
+    postings = sorted(postings, key=len)
+    common = {p["doc_id"] for p in postings[0]}
+    for posting in postings[1:]:
+        common &= {p["doc_id"] for p in posting}
+    return [c for c in common]
 
-def search(terms):
+
+
+def search(terms: list[str]):
     with open("term_index.json", "r") as f:
         term_index = json.load(f)
 
@@ -21,12 +28,17 @@ def search(terms):
             postings.append(data["postings"])
     return merge_postings(postings)
 
-def extract_terms(query):
-    return query.split(" AND ")
+def extract_terms(query: str):
+    return [i.lower() for i in query.split(" ")]
 
 def main():
     while True:
         query = input("Look for anything: ")
+        if query.lower() == "exit":
+            break
         terms = extract_terms(query)
         urls = search(terms)
         print(urls[:5])
+
+if __name__ == "__main__":
+    main()
