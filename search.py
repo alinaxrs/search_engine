@@ -1,4 +1,5 @@
 import json
+from nltk.stem import PorterStemmer
 import heapq
 
 
@@ -12,11 +13,14 @@ def merge_postings(postings):
 
 
 def search(terms: list[str]):
+    stemmer = PorterStemmer()
+    
     with open("term_index.json", "r") as f:
         term_index = json.load(f)
 
     positions = []
-    for term in terms:
+    stemmed_terms = [stemmer.stem(term) for term in terms]
+    for term in stemmed_terms:
         positions.append(term_index[term])
 
     with open("terms_aggregated.ndjson", "r") as f:
