@@ -2,7 +2,6 @@ import json
 import tokenizer
 import zipfile
 from bs4 import BeautifulSoup
-import re
 from nltk.stem import PorterStemmer
 from posting import Posting
 import os
@@ -13,7 +12,7 @@ Add functions here to 1) strip html tags to get raw text and 2) extract the text
 important tags like h2, strong tags.
 """
 
-EXTRACT_PATH = "analyst"
+EXTRACT_PATH = "developer"
 BATCH_SIZE = 2000
 
 def extract_text(soup):

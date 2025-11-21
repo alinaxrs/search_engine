@@ -2,8 +2,8 @@ import re
 
 def tokenize(content):
     content = content.lower()
-    tokens = re.findall(r'\b\w+\b', content) 
-    return [token for token in tokens if token.isalpha() and len(token) > 2]
+    tokens = re.findall(r"\b[^\W_]+\b", content) 
+    return [token for token in tokens if token.isalpha()]
 
 def computeWordFrequencies(tokens):
     freq = {}
