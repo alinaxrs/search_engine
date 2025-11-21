@@ -1,7 +1,7 @@
 import json
 from nltk.stem import PorterStemmer
-import heapq
-
+# import heapq
+import time
 
 def merge_postings(postings):
     postings = sorted(postings, key=len)
@@ -33,7 +33,17 @@ def search(terms: list[str]):
     return merge_postings(postings)
 
 def extract_terms(query: str):
-    return [i.lower() for i in query.split(" ")]
+    query = query.strip()
+    result = []
+    word = ""
+    for char in query:
+        if char.isalnum():
+            word += char.lower()
+        else:
+            if word:
+                result.append(word)
+                word = ""
+    return result
 
 def main():
     while True:
@@ -41,8 +51,11 @@ def main():
         if query.lower() == "exit":
             break
         terms = extract_terms(query)
+        start = time.time()
         urls = search(terms)
+        end = time.time()
         print(urls[:5])
+        print(f"\nSearch took {end - start:.4f} seconds\n")
 
 if __name__ == "__main__":
     main()
