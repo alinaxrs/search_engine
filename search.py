@@ -4,7 +4,11 @@ from nltk.stem import PorterStemmer
 import time
 
 def merge_postings(postings):
+    if not postings:
+        print("No postings found.")
+        return []
     postings = sorted(postings, key=len)
+    # print(postings)
     common = {p["doc_id"] for p in postings[0]}
     for posting in postings[1:]:
         common &= {p["doc_id"] for p in posting}
@@ -34,6 +38,7 @@ def search(terms: list[str]):
 
 def extract_terms(query: str):
     query = query.strip()
+    # print("this is the query: ", query)
     result = []
     word = ""
     for char in query:
@@ -43,6 +48,8 @@ def extract_terms(query: str):
             if word:
                 result.append(word)
                 word = ""
+    if word:
+        result.append(word)
     return result
 
 def main():
@@ -51,10 +58,14 @@ def main():
         if query.lower() == "exit":
             break
         terms = extract_terms(query)
+        # print("This is the pulled term", terms)
         start = time.time()
         urls = search(terms)
         end = time.time()
-        print(urls[:5])
+        if urls:
+            print(urls[:5])
+        else:
+            continue
         print(f"\nSearch took {end - start:.4f} seconds\n")
 
 if __name__ == "__main__":
