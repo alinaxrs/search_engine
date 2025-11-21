@@ -19,11 +19,11 @@ def search(terms: list[str]):
         term_index = json.load(f)
 
     positions = []
-    stemmed_terms = [stemmer.stem(term) for term in terms]
-    for term in stemmed_terms:
-        positions.append(term_index[term])
+    for term in terms:
+        stemmed = stemmer.stem(term)
+        positions.append(term_index[stemmed])
 
-    with open("terms_aggregated.ndjson", "r") as f:
+    with open("index.ndjson", "r") as f:
         postings = []
         for position in positions:
             f.seek(position)
