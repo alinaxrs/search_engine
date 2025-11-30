@@ -10,24 +10,15 @@ DOC_LENGTHS = {}  # doc_id -> total term count in document
 TERM_INDEX = None  # Cache term index in memory
 
 # Stopwords to filter out
-STOPWORDS = {
-    'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 
-    'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 
-    'to', 'was', 'will', 'with'
-}
+# STOPWORDS = {
+#     'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 
+#     'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 
+#     'to', 'was', 'will', 'with'
+# }
 
 def load_metadata():
     """Load document count and lengths for TF-IDF calculations"""
     global TOTAL_DOCS, DOC_LENGTHS, TERM_INDEX
-    # try:
-    #     with open("metadata.json", "r") as f:
-    #         meta = json.load(f)
-    #         TOTAL_DOCS = meta.get("total_docs", 55393)
-    #         DOC_LENGTHS = meta.get("doc_lengths", {})
-    # except FileNotFoundError:
-    #     # Default to approximate doc count if metadata doesn't exist
-    #     TOTAL_DOCS = 55393
-    #     DOC_LENGTHS = {}
     
     # Load term index once into memory
     TOTAL_DOCS = 55393
@@ -123,8 +114,8 @@ def search(terms: list[str], max_results=100):
         term_lower = term.lower()
         
         # Skip stopwords and very short terms
-        if term_lower in STOPWORDS or len(term_lower) < 2:
-            continue
+        # if term_lower in STOPWORDS or len(term_lower) < 2:
+        #     continue
         
         filtered_terms.append(term_lower)
         stemmed = stemmer.stem(term_lower)
@@ -183,6 +174,7 @@ def search(terms: list[str], max_results=100):
     ranked = merge_postings_ranked(postings_list, stemmed_terms, term_dfs)
     
     # Return top N results for performance
+    print(len(ranked), "results found.")
     return ranked[:max_results]
 
 def extract_terms(query: str):
