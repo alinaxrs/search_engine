@@ -174,8 +174,8 @@ def search(terms: list[str], max_results=100):
     ranked = merge_postings_ranked(postings_list, stemmed_terms, term_dfs)
     
     # Return top N results for performance
-    print(len(ranked), "results found.")
-    return ranked[:max_results]
+    # print(len(ranked), "results found.")
+    return ranked
 
 def extract_terms(query: str):
     query = query.strip()
