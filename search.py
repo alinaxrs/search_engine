@@ -13,13 +13,6 @@ DOC_FINGERPRINTS = {}  # hash -> canonical_doc_id mapping for exact duplicates
 DOC_SIMHASHES = {}  # doc_id -> simhash value for near duplicates
 SIMHASH_THRESHOLD = 3  # Hamming distance threshold for near-duplicates
 
-# Stopwords to filter out
-# STOPWORDS = {
-#     'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 
-#     'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 
-#     'to', 'was', 'will', 'with'
-# }
-
 def compute_exact_hash(content):
     """Compute MD5 hash for exact duplicate detection"""
     return hashlib.md5(content.encode('utf-8')).hexdigest()
@@ -90,7 +83,7 @@ def remove_near_duplicates(doc_ids):
         doc_hash = DOC_SIMHASHES.get(doc_id)
         
         if doc_hash is None:
-            # No hash available, keep document
+            # If there is no hash available, keep document
             unique_docs.append(doc_id)
             continue
         
@@ -106,6 +99,7 @@ def remove_near_duplicates(doc_ids):
             seen_hashes.append(doc_hash)
     
     return unique_docs
+
 def load_metadata():
     """Load document count and lengths for TF-IDF calculations"""
     global TOTAL_DOCS, DOC_LENGTHS, TERM_INDEX
@@ -201,7 +195,7 @@ def merge_postings_ranked(postings_list, query_terms, term_dfs):
 
 
 
-def search(terms: list[str], max_results=100, remove_duplicates=True, duplicate_method='near', require_all_terms=True):
+def search(terms: list[str], max_results=100, remove_duplicates=True, duplicate_method='near'):
     """Enhanced search with TF-IDF ranking, stopword filtering, and optimization"""
     stemmer = PorterStemmer()
     
@@ -217,10 +211,6 @@ def search(terms: list[str], max_results=100, remove_duplicates=True, duplicate_
     
     for term in terms:
         term_lower = term.lower()
-        
-        # Skip stopwords and very short terms
-        # if term_lower in STOPWORDS or len(term_lower) < 2:
-        #     continue
         
         filtered_terms.append(term_lower)
         stemmed = stemmer.stem(term_lower)
@@ -278,20 +268,19 @@ def search(terms: list[str], max_results=100, remove_duplicates=True, duplicate_
     # Use TF-IDF ranking with early termination
     ranked = merge_postings_ranked(postings_list, stemmed_terms, term_dfs)
     
-    # Filter to only documents containing ALL query terms (AND logic)
-    if require_all_terms and len(stemmed_terms) > 1:
-        # Build set of doc_ids for each term
-        term_doc_sets = []
-        for postings in postings_list:
-            if postings:  # Skip empty postings
-                doc_set = {posting["doc_id"] for posting in postings}
-                term_doc_sets.append(doc_set)
-        
-        # Find intersection - documents containing ALL terms
-        if term_doc_sets:
-            valid_docs = set.intersection(*term_doc_sets)
-            # Filter ranked results to only include valid docs
-            ranked = [doc_id for doc_id in ranked if doc_id in valid_docs]
+    # Boolean AND filtering:
+    # Build set of doc_ids for each term
+    term_doc_sets = []
+    for postings in postings_list:
+        if postings:  # Skip empty postings
+            doc_set = {posting["doc_id"] for posting in postings}
+            term_doc_sets.append(doc_set)
+    
+    # Find intersection - documents containing ALL terms
+    if term_doc_sets:
+        valid_docs = set.intersection(*term_doc_sets)
+        # Filter ranked results to only include valid docs
+        ranked = [doc_id for doc_id in ranked if doc_id in valid_docs]
     
     # Remove duplicates if requested
     if remove_duplicates:
@@ -310,8 +299,10 @@ def search(terms: list[str], max_results=100, remove_duplicates=True, duplicate_
     return ranked
 
 def extract_terms(query: str):
+    """
+    Extract alphanumeric terms from query string, lowercased.
+    """
     query = query.strip()
-    # print("this is the query: ", query)
     result = []
     word = ""
     for char in query:
@@ -328,7 +319,6 @@ def extract_terms(query: str):
 def main():
     # Load metadata once at startup
     load_metadata()
-    # print(f"Search engine ready. Indexed {TOTAL_DOCS} documents.")
     print("Enter 'exit' or 'quit' to stop.\n")
     
     while True:
